@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1512">
+<title>GEO MIST – Plant Monitor</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+
+<style>
+/* ═══════════════════════════════════════════
+   CSS VARIABLES & RESET
+═══════════════════════════════════════════ */
+:root {
+  --bg:        #0b1512;
+  --surface:   #111e18;
+  --card:      #162419;
+  --card2:     #1c2e22;
+  --border:    #1f3328;
+  --green:     #3bffa0;
+  --green-dim: rgba(59,255,160,0.12);
+  --blue:      #38d9ff;
+  --blue-dim:  rgba(56,217,255,0.12);
+  --orange:    #ff7b4a;
+  --orange-dim:rgba(255,123,74,0.12);
+  --yellow:    #ffd34e;
+  --red:       #ff4f6a;
+  --text:      #dff0e8;
+  --muted:     #4e7a60;
+  --muted2:    #2a4535;
+  --font:      'Outfit', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+  --radius:    18px;
+  --radius-sm: 12px;
+  --tab-h:     72px;
+  --safe-b:    env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* ═══════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════ */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ── STATUS BAR ── */
+.status-bar {
+  height: 44px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.status-bar .brand {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.05em;
+}
+
+.status-bar .right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.conn-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  transition: background 0.4s;
+  animation: pulse-dot 2s infinite;
+}
+.conn-dot.online { background: var(--green); }
+
+@keyframes pulse-dot {
+  0%,100% { opacity:1; }
+  50% { opacity:0.4; }
+}
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding: 16px 16px 20px;
+}
+
+.scroll-area::-webkit-scrollbar { display: none; }
+
+/* ── TAB BAR ── */
+.tab-bar {
+  height: calc(var(--tab-h) + var(--safe-b));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--muted);
+  transition: color 0.2s;
+  position: relative;
+}
+
+.tab-btn.active { color: var(--green); }
+
+.tab-btn svg { width: 22px; height: 22px; stroke-width: 1.8; fill: none; }
+
+.tab-label { font-size: 10px; font-weight: 500; letter-spacing: 0.03em; }
+
+.tab-badge {
+  position: absolute;
+  top: 4px; right: calc(50% - 20px);
+  background: var(--red);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px; height: 16px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
+
+/* ── VIEWS ── */
+.view { display: none; animation: slideUp 0.3s ease; }
+.view.active { display: block; }
+
+@keyframes slideUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ═══════════════════════════════════════════
+   COMPONENTS
+═══════════════════════════════════════════ */
+
+/* ── PAGE HEADER ── */
+.page-header {
+  margin-bottom: 20px;
+}
+.page-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.page-sub {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* ── SUMMARY ROW ── */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.summary-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-chip::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--chip-color, var(--green));
+}
+
+.chip-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--chip-color, var(--green));
+  font-family: var(--mono);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.chip-label {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── SENSOR CARD ── */
+.sensor-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 12px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.sensor-card.alert-state {
+  border-color: rgba(255,79,106,0.4);
+  box-shadow: 0 0 20px rgba(255,79,106,0.08);
+}
+
+.sensor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.sensor-meta {}
+.sensor-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.sensor-zone {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.sensor-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.online-pill {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 50px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.online-pill.online {
+  background: rgba(59,255,160,0.1);
+  color: var(--green);
+  border: 1px solid rgba(59,255,160,0.25);
+}
+.online-pill.offline {
+  background: rgba(255,79,106,0.1);
+  color: var(--red);
+  border: 1px solid rgba(255,79,106,0.25);
+}
+
+.signal-bar {
+  font-size: 9px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+/* ── READINGS ROW ── */
+.readings-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.reading-block {
+  flex: 1;
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+}
+
+.reading-icon {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.reading-val {
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.reading-lbl {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-name {
+  font-size: 10px;
+  color: var(--muted);
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.progress-track {
+  flex: 1;
+  height: 4px;
+  background: var(--muted2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+.progress-pct {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── LAST UPDATE ── */
+.last-update {
+  font-size: 9px;
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.update-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  margin-right: 5px;
+  animation: pulse-dot 1.5s infinite;
+}
+
+/* ═══════════════════════════════════════════
+   VIEW: LIVE (Real-time charts)
+═══════════════════════════════════════════ */
+.live-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.live-selector::-webkit-scrollbar { display: none; }
+
+.selector-btn {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.selector-btn.active {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.live-metric-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.lmc {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.lmc-val {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--lmc-color, var(--green));
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.lmc-lbl {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.chart-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--text);
+}
+
+canvas { width: 100% !important; border-radius: 6px; }
+
+/* ═══════════════════════════════════════════
+   VIEW: ALERTS
+═══════════════════════════════════════════ */
+.alert-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-chip {
+  padding: 5px 14px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.filter-chip.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+.alert-card {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  animation: slideUp 0.3s ease;
+}
+
+.alert-card.critical { border-left-color: var(--red); }
+.alert-card.warning  { border-left-color: var(--yellow); }
+.alert-card.info     { border-left-color: var(--blue); }
+
+.alert-icon-wrap {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.critical .alert-icon-wrap { background: rgba(255,79,106,0.12); }
+.warning  .alert-icon-wrap { background: rgba(255,211,78,0.12); }
+.info     .alert-icon-wrap { background: rgba(56,217,255,0.12); }
+
+.alert-body { flex: 1; min-width: 0; }
+.alert-msg  { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; }
+.alert-ts   { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+.ack-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-size: 10px;
+  padding: 4px 10px; border-radius: 6px;
+  cursor: pointer; flex-shrink: 0; margin-top: 2px;
+  transition: all 0.2s;
+}
+.ack-btn:hover { border-color: var(--green); color: var(--green); }
+
+.no-alerts {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.no-alerts div { font-size: 36px; margin-bottom: 10px; }
+
+/* ═══════════════════════════════════════════
+   VIEW: SCHEDULE
+═══════════════════════════════════════════ */
+.add-schedule-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--green-dim);
+  border: 1px dashed rgba(59,255,160,0.3);
+  border-radius: var(--radius-sm);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+}
+.add-schedule-btn:hover { background: rgba(59,255,160,0.18); }
+
+.schedule-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sch-icon {
+  width: 44px; height: 44px;
+  background: var(--blue-dim);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sch-body { flex: 1; }
+.sch-time { font-size: 20px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.sch-zone { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.sch-days { font-size: 10px; color: var(--blue); margin-top: 4px; font-weight: 500; }
+
+/* ── TOGGLE SWITCH ── */
+.toggle-sw {
+  width: 46px; height: 26px;
+  background: var(--muted2);
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+.toggle-sw.on { background: var(--green); }
+.toggle-sw::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  background: white;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: left 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.toggle-sw.on::after { left: 23px; }
+
+/* ── WATER NOW BUTTON ── */
+.water-now-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #1a7a4a, #0d5a35);
+  border: 1px solid rgba(59,255,160,0.2);
+  border-radius: var(--radius);
+  color: var(--green);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.water-now-btn:hover { background: linear-gradient(135deg, #1f9459, #12703f); }
+.water-now-btn:active { transform: scale(0.98); }
+
+/* ═══════════════════════════════════════════
+   VIEW: SETTINGS
+═══════════════════════════════════════════ */
+.settings-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.settings-group-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+
+.setting-row:last-child { border-bottom: none; }
+
+.setting-info .setting-name { font-size: 14px; font-weight: 500; }
+.setting-info .setting-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.setting-val {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+
+/* ── RANGE ── */
+.range-wrap { flex: 1; }
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(59,255,160,0.4);
+}
+
+/* ── APP INFO CARD ── */
+.app-info-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.app-logo {
+  width: 60px; height: 60px;
+  background: linear-gradient(135deg, var(--green), #14a855);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--bg);
+  margin: 0 auto 12px;
+  box-shadow: 0 0 30px rgba(59,255,160,0.25);
+}
+
+.app-name { font-size: 18px; font-weight: 800; }
+.app-tagline { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.app-ver { font-size: 10px; color: var(--muted); margin-top: 10px; font-family: var(--mono); }
+
+/* ═══════════════════════════════════════════
+   TOAST NOTIFICATION
+═══════════════════════════════════════════ */
+#toast-container {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: calc(100% - 32px);
+  max-width: 440px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: all;
+  animation: toastIn 0.3s ease forwards;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+.toast.critical { border-left: 3px solid var(--red); }
+.toast.warning  { border-left: 3px solid var(--yellow); }
+.toast.success  { border-left: 3px solid var(--green); }
+
+@keyframes toastIn {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+@keyframes toastOut {
+  to { opacity:0; transform:translateY(-10px); }
+}
+
+/* ═══════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 500;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px 20px 40px;
+  animation: slideUp 0.3s ease;
+}
+
+.modal-handle {
+  width: 40px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+
+.form-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--green); }
+
+.days-select {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+
+.day-chip {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.day-chip.sel { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+
+.btn-primary {
+  flex: 1;
+  padding: 14px;
+  background: var(--green);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+.btn-cancel {
+  padding: 14px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOAST CONTAINER ═══ -->
+<div id="toast-container"></div>
+
+<!-- ═══ SCHEDULE MODAL ═══ -->
+<div class="modal-overlay" id="scheduleModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Watering Schedule</div>
+    <div class="form-group">
+      <div class="form-label">Zone</div>
+      <select class="form-input" id="newZone">
+        <option value="A">Zone A – Greenhouse</option>
+        <option value="B">Zone B – Open Field</option>
+        <option value="C">Zone C – Indoor Farm</option>
+        <option value="D">Zone D – Display Area</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Time</div>
+      <input type="time" class="form-input" id="newTime" value="07:00">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Duration (minutes)</div>
+      <input type="number" class="form-input" id="newDuration" value="15" min="1" max="60">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Days</div>
+      <div class="days-select" id="daysSelect">
+        <div class="day-chip sel" data-day="Mon">M</div>
+        <div class="day-chip"    data-day="Tue">T</div>
+        <div class="day-chip sel" data-day="Wed">W</div>
+        <div class="day-chip"    data-day="Thu">T</div>
+        <div class="day-chip sel" data-day="Fri">F</div>
+        <div class="day-chip"    data-day="Sat">S</div>
+        <div class="day-chip"    data-day="Sun">S</div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveSchedule()">Save Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP SHELL ═══ -->
+<div id="app">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="brand">GEO MIST</div>
+    <div class="right">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="clockEl" style="font-family:var(--mono);font-size:11px">--:--</span>
+    </div>
+  </div>
+
+  <!-- SCROLL AREA -->
+  <div class="scroll-area" id="scrollArea">
+
+    <!-- ═══ VIEW: HOME ═══ -->
+    <div class="view active" id="view-home">
+      <div class="page-header">
+        <div class="page-title">Plant Monitor 🌿</div>
+        <div class="page-sub">Live sensor readings</div>
+      </div>
+
+      <!-- Summary chips -->
+      <div class="summary-row">
+        <div class="summary-chip" style="--chip-color:var(--orange)">
+          <div class="chip-val" id="avgTemp">--°</div>
+          <div class="chip-label">Avg Temp</div>
+        </div>
+        <div class="summary-chip" style="--chip-color:var(--blue)">
+          <div class="chip-val" id="avgHum">--%</div>
+          <div class="chip-label">Avg Humidity</div>
+        </div>
+        <div class="summary-chip" style="--chip-color:var(--green)">
+          <div class="chip-val" id="avgMoist">--%</div>
+          <div class="chip-label">Avg Moisture</div>
+        </div>
+      </div>
+
+      <!-- Sensor cards -->
+      <div id="sensorCards">
+        <div style="text-align:center;padding:40px;color:var(--muted)">
+          <div style="font-size:28px;margin-bottom:10px">📡</div>
+          Connecting to sensors...
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: LIVE CHARTS ═══ -->
+    <div class="view" id="view-live">
+      <div class="page-header">
+        <div class="page-title">Live Trends 📈</div>
+        <div class="page-sub">Real-time data stream</div>
+      </div>
+
+      <div class="live-selector" id="sensorSelector"></div>
+
+      <div class="live-metric-cards">
+        <div class="lmc" style="--lmc-color:var(--orange)">
+          <div class="lmc-val" id="liveTemp">--°C</div>
+          <div class="lmc-lbl">Temperature</div>
+        </div>
+        <div class="lmc" style="--lmc-color:var(--blue)">
+          <div class="lmc-val" id="liveHum">--%</div>
+          <div class="lmc-lbl">Humidity</div>
+        </div>
+        <div class="lmc" style="--lmc-color:var(--green)">
+          <div class="lmc-val" id="liveMoist">--%</div>
+          <div class="lmc-lbl">Moisture</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Temperature (°C)</div>
+        <canvas id="chartTemp" height="100"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Humidity (%)</div>
+        <canvas id="chartHum" height="100"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Soil Moisture (%)</div>
+        <canvas id="chartMoist" height="100"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: ALERTS ═══ -->
+    <div class="view" id="view-alerts">
+      <div class="page-header">
+        <div class="page-title">Alerts 🔔</div>
+        <div class="page-sub">System notifications</div>
+      </div>
+      <div class="alert-filter">
+        <div class="filter-chip active" onclick="filterAlerts('all', this)">All</div>
+        <div class="filter-chip" onclick="filterAlerts('critical', this)">Critical</div>
+        <div class="filter-chip" onclick="filterAlerts('warning', this)">Warning</div>
+        <div class="filter-chip" onclick="filterAlerts('info', this)">Info</div>
+      </div>
+      <div id="alertsList">
+        <div class="no-alerts"><div>✅</div>No alerts — all systems normal</div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: SCHEDULE ═══ -->
+    <div class="view" id="view-schedule">
+      <div class="page-header">
+        <div class="page-title">Watering 💧</div>
+        <div class="page-sub">Irrigation schedules</div>
+      </div>
+
+      <button class="add-schedule-btn" onclick="openModal()">+ Add New Schedule</button>
+
+      <div id="scheduleList"></div>
+
+      <button class="water-now-btn" onclick="triggerWaterNow()">
+        💧 Water All Zones Now
+      </button>
+    </div>
+
+    <!-- ═══ VIEW: SETTINGS ═══ -->
+    <div class="view" id="view-settings">
+      <div class="page-header">
+        <div class="page-title">Settings ⚙️</div>
+        <div class="page-sub">Configuration</div>
+      </div>
+
+      <div class="app-info-card">
+        <div class="app-logo">GM</div>
+        <div class="app-name">GEO MIST Monitor</div>
+        <div class="app-tagline">Smart Plant Environment System</div>
+        <div class="app-ver">v1.0.0 · 6 sensors online</div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Alert Thresholds</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Max Temperature</div>
+            <div class="setting-desc">Alert above this value</div>
+          </div>
+          <div class="range-wrap" style="max-width:120px">
+            <input type="range" min="22" max="40" value="29" id="rTemp" oninput="document.getElementById('vTemp').textContent=this.value+'°C'">
+          </div>
+          <div class="setting-val" id="vTemp">29°C</div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Min Humidity</div>
+            <div class="setting-desc">Alert below this level</div>
+          </div>
+          <div class="range-wrap" style="max-width:120px">
+            <input type="range" min="30" max="80" value="55" id="rHum" oninput="document.getElementById('vHum').textContent=this.value+'%'">
+          </div>
+          <div class="setting-val" id="vHum">55%</div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Min Soil Moisture</div>
+            <div class="setting-desc">Watering trigger</div>
+          </div>
+          <div class="range-wrap" style="max-width:120px">
+            <input type="range" min="20" max="70" value="40" id="rMoist" oninput="document.getElementById('vMoist').textContent=this.value+'%'">
+          </div>
+          <div class="setting-val" id="vMoist">40%</div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Notifications</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Push Notifications</div>
+            <div class="setting-desc">Browser alerts</div>
+          </div>
+          <div class="toggle-sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Email Alerts</div>
+            <div class="setting-desc">Critical events via email</div>
+          </div>
+          <div class="toggle-sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Daily Summary</div>
+            <div class="setting-desc">Morning health digest</div>
+          </div>
+          <div class="toggle-sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">System</div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Auto-Irrigation</div>
+            <div class="setting-desc">Trigger watering automatically</div>
+          </div>
+          <div class="toggle-sw" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Data Sync Interval</div>
+            <div class="setting-desc">How often to refresh</div>
+          </div>
+          <div class="setting-val">5s</div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-name">Server</div>
+            <div class="setting-desc" id="serverUrl">localhost:3000</div>
+          </div>
+          <div class="setting-val" style="color:var(--green)">LIVE</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('home', this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span class="tab-label">Sensors</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('live', this)">
+      <svg viewBox="0 0 24 24"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+      <span class="tab-label">Live</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('alerts', this)">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="tab-label">Alerts</span>
+      <div class="tab-badge" id="alertBadge" style="display:none">0</div>
+    </button>
+    <button class="tab-btn" onclick="switchTab('schedule', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 6v6l4 2"/></svg>
+      <span class="tab-label">Schedule</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('settings', this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <span class="tab-label">Settings</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   GEO MIST APP — Frontend JavaScript
+   Connects to backend via WebSocket for real-time data
+═══════════════════════════════════════════════════════════ */
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+const State = {
+  sensors: {},        // { id: { meta, latestReading } }
+  alerts: [],
+  schedules: [],
+  selectedSensor: null,
+  liveBuffer: {},     // { sensorId: { temp:[], hum:[], moist:[], labels:[] } }
+  alertFilter: 'all',
+  ws: null,
+  charts: {},
+};
+
+const PLANTS = {
+  'GMS-001': '🌿', 'GMS-002': '🍅', 'GMS-003': '🌺',
+  'GMS-004': '🥬', 'GMS-005': '🌾', 'GMS-006': '🫑',
+};
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
+function tick() {
+  const now = new Date();
+  document.getElementById('clockEl').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
+}
+tick(); setInterval(tick, 5000);
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('scrollArea').scrollTop = 0;
+  if (name === 'live') initLiveCharts();
+}
+
+// ── WEBSOCKET ─────────────────────────────────────────────────────────────────
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const host  = location.host || 'localhost:3000';
+  const url   = `${proto}://${host}`;
+
+  try {
+    State.ws = new WebSocket(url);
+  } catch(e) {
+    startDemoMode();
+    return;
+  }
+
+  State.ws.onopen = () => {
+    setOnline(true);
+    showToast('✅ Connected to GEO MIST server', 'success');
+  };
+
+  State.ws.onmessage = (e) => {
+    const { event, data } = JSON.parse(e.data);
+    handleWSEvent(event, data);
+  };
+
+  State.ws.onclose = () => {
+    setOnline(false);
+    setTimeout(connectWS, 4000);
+  };
+
+  State.ws.onerror = () => {
+    State.ws.close();
+    startDemoMode();
+  };
+}
+
+function handleWSEvent(event, data) {
+  switch(event) {
+    case 'snapshot':
+      data.sensors.forEach(s => { State.sensors[s.meta.id] = s; });
+      State.alerts    = data.alerts || [];
+      State.schedules = data.schedules || [];
+      renderAll();
+      break;
+
+    case 'sensor_update':
+      const { sensor } = data;
+      State.sensors[sensor.meta.id] = sensor;
+      updateSensorCard(sensor);
+      pushLiveBuffer(sensor);
+      updateSummaryChips();
+      if (State.selectedSensor === sensor.meta.id) updateLiveMetricCards(sensor.latestReading);
+      break;
+
+    case 'new_alerts':
+      State.alerts.push(...data);
+      renderAlerts();
+      data.forEach(a => showToast(a.message, a.type));
+      updateAlertBadge();
+      break;
+
+    case 'alerts_updated':
+      State.alerts = data;
+      renderAlerts();
+      updateAlertBadge();
+      break;
+
+    case 'schedules_updated':
+      State.schedules = data;
+      renderSchedules();
+      break;
+
+    case 'watering_triggered':
+      showToast('💧 Watering triggered for Zone ' + data.zoneId, 'success');
+      break;
+  }
+}
+
+function sendWS(action, payload) {
+  if (State.ws?.readyState === WebSocket.OPEN) {
+    State.ws.send(JSON.stringify({ action, payload }));
+  }
+}
+
+function setOnline(on) {
+  const dot = document.getElementById('connDot');
+  dot.classList.toggle('online', on);
+}
+
+// ── DEMO MODE (no server) ────────────────────────────────────────────────────
+function startDemoMode() {
+  setOnline(true);
+  showToast('📡 Demo mode — simulating sensors', 'success');
+
+  const demoSensors = [
+    { id:'GMS-001', name:'Basil Pot',      zone:'A', plant:'Basil'     },
+    { id:'GMS-002', name:'Tomato Bed',      zone:'B', plant:'Tomato'    },
+    { id:'GMS-003', name:'Orchid Shelf',    zone:'C', plant:'Orchid'    },
+    { id:'GMS-004', name:'Lettuce Row',     zone:'A', plant:'Lettuce'   },
+    { id:'GMS-005', name:'Wheat Field',     zone:'B', plant:'Wheat'     },
+    { id:'GMS-006', name:'Bell Pepper Pot', zone:'C', plant:'Bell Pepper'},
+  ];
+
+  const bases = {
+    'GMS-001':{ t:23, h:70, m:65 }, 'GMS-002':{ t:28, h:58, m:42 },
+    'GMS-003':{ t:21, h:74, m:60 }, 'GMS-004':{ t:30, h:55, m:35 },
+    'GMS-005':{ t:25, h:68, m:72 }, 'GMS-006':{ t:27, h:63, m:58 },
+  };
+
+  demoSensors.forEach(meta => {
+    const b = bases[meta.id];
+    State.sensors[meta.id] = {
+      meta,
+      latestReading: {
+        sensorId: meta.id, battery: 90, rssi: -55,
+        temperature: b.t, humidity: b.h, moisture: b.m, ts: Date.now()
+      }
+    };
+    State.liveBuffer[meta.id] = { temp:[], hum:[], moist:[], labels:[] };
+  });
+
+  State.schedules = [
+    { id:'s1', zoneId:'A', time:'06:00', days:['Mon','Wed','Fri'], duration:15, enabled:true },
+    { id:'s2', zoneId:'B', time:'07:30', days:['Tue','Thu'],       duration:20, enabled:true },
+    { id:'s3', zoneId:'C', time:'08:00', days:['Mon','Thu'],       duration:10, enabled:false },
+  ];
+
+  renderAll();
+
+  // Simulate live updates
+  setInterval(() => {
+    Object.values(State.sensors).forEach(s => {
+      const b = bases[s.meta.id];
+      const r = {
+        sensorId: s.meta.id, battery: s.latestReading.battery,
+        rssi: s.latestReading.rssi, ts: Date.now(),
+        temperature: +(b.t + (Math.random()-0.5)*2).toFixed(1),
+        humidity:    +(b.h + (Math.random()-0.5)*3).toFixed(1),
+        moisture:    +(b.m + (Math.random()-0.5)*4).toFixed(1),
+      };
+      s.latestReading = r;
+      updateSensorCard(s);
+      pushLiveBuffer(s);
+      updateSummaryChips();
+      if (State.selectedSensor === s.meta.id) updateLiveMetricCards(r);
+
+      // Occasionally generate alert
+      if (Math.random() < 0.015) {
+        const alert = { id:'a'+Date.now(), type:'warning', sensorId:s.meta.id,
+          message:`⚠️ Moisture low at ${s.meta.name}: ${r.moisture.toFixed(0)}%`, ts: Date.now() };
+        State.alerts.unshift(alert);
+        renderAlerts();
+        showToast(alert.message, 'warning');
+        updateAlertBadge();
+      }
+    });
+  }, 3000);
+}
+
+// ── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderSensorCards();
+  renderAlerts();
+  renderSchedules();
+  buildSensorSelector();
+  updateSummaryChips();
+  updateAlertBadge();
+}
+
+// ── SENSOR CARDS ─────────────────────────────────────────────────────────────
+function renderSensorCards() {
+  const container = document.getElementById('sensorCards');
+  container.innerHTML = '';
+  Object.values(State.sensors).forEach(s => {
+    container.appendChild(createSensorCard(s));
+  });
+}
+
+function createSensorCard(sensor) {
+  const { meta, latestReading: r } = sensor;
+  const emoji = PLANTS[meta.id] || '🌱';
+  const alerting = r.temperature > 29 || r.moisture < 40;
+  const online = (Date.now() - r.ts) < 30000;
+
+  const card = document.createElement('div');
+  card.className = 'sensor-card' + (alerting ? ' alert-state' : '');
+  card.id = 'scard-' + meta.id;
+
+  const batt = r.battery || 100;
+  const battColor = batt > 50 ? 'var(--green)' : batt > 20 ? 'var(--yellow)' : 'var(--red)';
+
+  card.innerHTML = `
+    <div class="sensor-card-header">
+      <div class="sensor-meta">
+        <div class="sensor-name">${emoji} ${meta.name}</div>
+        <div class="sensor-zone">Zone ${meta.zone} · ${meta.id}</div>
+      </div>
+      <div class="sensor-status">
+        <div class="online-pill ${online?'online':'offline'}">${online?'● LIVE':'○ OFFLINE'}</div>
+        <div class="signal-bar">📶 ${r.rssi || '-65'}dBm</div>
+      </div>
+    </div>
+    <div class="readings-row">
+      <div class="reading-block">
+        <div class="reading-icon">🌡️</div>
+        <div class="reading-val" style="color:${r.temperature>29?'var(--red)':'var(--orange)'}">${r.temperature}°C</div>
+        <div class="reading-lbl">Temp</div>
+      </div>
+      <div class="reading-block">
+        <div class="reading-icon">💧</div>
+        <div class="reading-val" style="color:var(--blue)">${r.humidity}%</div>
+        <div class="reading-lbl">Humidity</div>
+      </div>
+      <div class="reading-block">
+        <div class="reading-icon">🌱</div>
+        <div class="reading-val" style="color:${r.moisture<40?'var(--red)':'var(--green)'}">${r.moisture}%</div>
+        <div class="reading-lbl">Moisture</div>
+      </div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-item">
+        <div class="progress-name">Temperature</div>
+        <div class="progress-track"><div class="progress-fill" style="width:${Math.min(r.temperature/40*100,100)}%;background:var(--orange)"></div></div>
+        <div class="progress-pct">${r.temperature}°</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-name">Humidity</div>
+        <div class="progress-track"><div class="progress-fill" style="width:${r.humidity}%;background:var(--blue)"></div></div>
+        <div class="progress-pct">${r.humidity}%</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-name">Moisture</div>
+        <div class="progress-track"><div class="progress-fill" style="width:${r.moisture}%;background:${r.moisture<40?'var(--red)':'var(--green)'}"></div></div>
+        <div class="progress-pct">${r.moisture}%</div>
+      </div>
+    </div>
+    <div class="last-update">
+      <span><span class="update-dot"></span>Updated ${timeAgo(r.ts)}</span>
+      <span style="color:${battColor}">🔋 ${batt}%</span>
+    </div>
+  `;
+  return card;
+}
+
+function updateSensorCard(sensor) {
+  const existing = document.getElementById('scard-' + sensor.meta.id);
+  if (existing) {
+    const fresh = createSensorCard(sensor);
+    existing.replaceWith(fresh);
+  }
+}
+
+function updateSummaryChips() {
+  const readings = Object.values(State.sensors).map(s => s.latestReading).filter(Boolean);
+  if (!readings.length) return;
+  const avg = (arr) => (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1);
+  document.getElementById('avgTemp').textContent  = avg(readings.map(r=>r.temperature)) + '°';
+  document.getElementById('avgHum').textContent   = avg(readings.map(r=>r.humidity))    + '%';
+  document.getElementById('avgMoist').textContent = avg(readings.map(r=>r.moisture))    + '%';
+}
+
+// ── ALERTS ───────────────────────────────────────────────────────────────────
+function renderAlerts() {
+  const list = document.getElementById('alertsList');
+  let filtered = State.alerts;
+  if (State.alertFilter !== 'all') filtered = State.alerts.filter(a => a.type === State.alertFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="no-alerts"><div>✅</div>No alerts — all systems normal</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  filtered.slice().reverse().forEach(a => {
+    const card = document.createElement('div');
+    card.className = `alert-card ${a.type}`;
+    const icon = a.type === 'critical' ? '🚨' : a.type === 'warning' ? '⚠️' : 'ℹ️';
+    card.innerHTML = `
+      <div class="alert-icon-wrap">${icon}</div>
+      <div class="alert-body">
+        <div class="alert-msg">${a.message}</div>
+        <div class="alert-ts">${timeAgo(a.ts)}</div>
+      </div>
+      <button class="ack-btn" onclick="ackAlert('${a.id}')">✓ Ack</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function filterAlerts(type, el) {
+  State.alertFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAlerts();
+}
+
+function ackAlert(id) {
+  State.alerts = State.alerts.filter(a => a.id !== id);
+  sendWS('ack_alert', { id });
+  renderAlerts();
+  updateAlertBadge();
+}
+
+function updateAlertBadge() {
+  const badge = document.getElementById('alertBadge');
+  const count = State.alerts.filter(a => a.type === 'critical' || a.type === 'warning').length;
+  badge.style.display = count ? 'flex' : 'none';
+  badge.textContent = count > 9 ? '9+' : count;
+}
+
+// ── SCHEDULES ────────────────────────────────────────────────────────────────
+function renderSchedules() {
+  const list = document.getElementById('scheduleList');
+  list.innerHTML = '';
+  State.schedules.forEach(sch => {
+    const card = document.createElement('div');
+    card.className = 'schedule-card';
+    card.innerHTML = `
+      <div class="sch-icon">💧</div>
+      <div class="sch-body">
+        <div class="sch-time">${sch.time}</div>
+        <div class="sch-zone">Zone ${sch.zoneId} · ${sch.duration} min</div>
+        <div class="sch-days">${sch.days.join(' · ')}</div>
+      </div>
+      <div class="toggle-sw ${sch.enabled?'on':''}" onclick="toggleSchedule('${sch.id}', this)"></div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function toggleSchedule(id, el) {
+  el.classList.toggle('on');
+  const sch = State.schedules.find(s => s.id === id);
+  if (sch) sch.enabled = !sch.enabled;
+  sendWS('toggle_schedule', { id });
+}
+
+function openModal() {
+  document.getElementById('scheduleModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('scheduleModal').classList.remove('open');
+}
+
+// Day chip selection
+document.querySelectorAll('.day-chip').forEach(chip => {
+  chip.addEventListener('click', () => chip.classList.toggle('sel'));
+});
+
+function saveSchedule() {
+  const days = [...document.querySelectorAll('.day-chip.sel')].map(c => c.dataset.day);
+  const sch = {
+    id: 'sch-' + Date.now(),
+    zoneId: document.getElementById('newZone').value,
+    time: document.getElementById('newTime').value,
+    duration: +document.getElementById('newDuration').value,
+    days,
+    enabled: true,
+  };
+  State.schedules.push(sch);
+  renderSchedules();
+  closeModal();
+  showToast('✅ Schedule saved!', 'success');
+
+  fetch('/api/schedules', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sch)
+  }).catch(() => {});
+}
+
+function triggerWaterNow() {
+  sendWS('trigger_water', { zoneId: 'ALL' });
+  showToast('💧 Watering all zones!', 'success');
+}
+
+// ── LIVE CHARTS ───────────────────────────────────────────────────────────────
+const BUFFER_SIZE = 20;
+
+function pushLiveBuffer(sensor) {
+  const id = sensor.meta.id;
+  const r  = sensor.latestReading;
+  if (!State.liveBuffer[id]) {
+    State.liveBuffer[id] = { temp:[], hum:[], moist:[], labels:[] };
+  }
+  const buf = State.liveBuffer[id];
+  const now = new Date(r.ts);
+  buf.labels.push(`${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`);
+  buf.temp.push(r.temperature);
+  buf.hum.push(r.humidity);
+  buf.moist.push(r.moisture);
+
+  if (buf.labels.length > BUFFER_SIZE) {
+    ['labels','temp','hum','moist'].forEach(k => buf[k].shift());
+  }
+
+  if (State.selectedSensor === id && State.charts.temp) {
+    updateChartData(State.charts.temp, buf.labels, buf.temp);
+    updateChartData(State.charts.hum,  buf.labels, buf.hum);
+    updateChartData(State.charts.moist,buf.labels, buf.moist);
+  }
+}
+
+function updateChartData(chart, labels, data) {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update('none');
+}
+
+function buildSensorSelector() {
+  const sel = document.getElementById('sensorSelector');
+  sel.innerHTML = '';
+  Object.values(State.sensors).forEach((s, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'selector-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = `${PLANTS[s.meta.id]||'🌱'} ${s.meta.name}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.selector-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      State.selectedSensor = s.meta.id;
+      const buf = State.liveBuffer[s.meta.id] || { labels:[], temp:[], hum:[], moist:[] };
+      if (State.charts.temp) {
+        updateChartData(State.charts.temp, buf.labels, buf.temp);
+        updateChartData(State.charts.hum,  buf.labels, buf.hum);
+        updateChartData(State.charts.moist,buf.labels, buf.moist);
+      }
+      updateLiveMetricCards(s.latestReading);
+    };
+    sel.appendChild(btn);
+    if (i === 0) {
+      State.selectedSensor = s.meta.id;
+    }
+  });
+}
+
+function initLiveCharts() {
+  if (State.charts.temp) return;
+
+  const opts = (color, min, max, unit) => ({
+    responsive: true,
+    animation: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { display: true, grid: { color:'#1f3328' }, ticks: { color:'#4e7a60', font:{size:9}, maxTicksLimit:6 } },
+      y: { display: true, min, max, grid: { color:'#1f3328' }, ticks: { color:'#4e7a60', font:{size:9}, callback: v => v+unit } }
+    }
+  });
+
+  const makeDataset = (color) => ({
+    data: [], borderColor: color,
+    backgroundColor: color+'22',
+    tension: 0.4, fill: true,
+    pointRadius: 2, borderWidth: 2,
+    pointBackgroundColor: color,
+  });
+
+  State.charts.temp = new Chart(document.getElementById('chartTemp'), {
+    type: 'line',
+    data: { labels:[], datasets:[makeDataset('#ff7b4a')] },
+    options: opts('#ff7b4a', 15, 40, '°C')
+  });
+
+  State.charts.hum = new Chart(document.getElementById('chartHum'), {
+    type: 'line',
+    data: { labels:[], datasets:[makeDataset('#38d9ff')] },
+    options: opts('#38d9ff', 20, 100, '%')
+  });
+
+  State.charts.moist = new Chart(document.getElementById('chartMoist'), {
+    type: 'line',
+    data: { labels:[], datasets:[makeDataset('#3bffa0')] },
+    options: opts('#3bffa0', 0, 100, '%')
+  });
+
+  // Load current buffer
+  const buf = State.liveBuffer[State.selectedSensor] || { labels:[], temp:[], hum:[], moist:[] };
+  updateChartData(State.charts.temp,  buf.labels, buf.temp);
+  updateChartData(State.charts.hum,   buf.labels, buf.hum);
+  updateChartData(State.charts.moist, buf.labels, buf.moist);
+
+  // Update metric cards
+  const sensor = State.sensors[State.selectedSensor];
+  if (sensor) updateLiveMetricCards(sensor.latestReading);
+}
+
+function updateLiveMetricCards(r) {
+  if (!r) return;
+  document.getElementById('liveTemp').textContent  = r.temperature + '°C';
+  document.getElementById('liveHum').textContent   = r.humidity    + '%';
+  document.getElementById('liveMoist').textContent = r.moisture    + '%';
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'toastOut 0.3s forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function timeAgo(ts) {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 5)  return 'just now';
+  if (diff < 60) return diff + 's ago';
+  const m = Math.floor(diff/60);
+  if (m < 60) return m + 'm ago';
+  return Math.floor(m/60) + 'h ago';
+}
+
+Chart.defaults.color = '#4e7a60';
+Chart.defaults.borderColor = '#1f3328';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+connectWS();
+</script>
+</body>
+</html>
