@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GeoMist - Smart Farming</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+	body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #0f3d2e, #2e8b57);
+    color: white;
+    text-align: center;
+}
+
+header {
+    display: flex;
+    justify-content: flex-start;;
+    align-items: center;
+    padding: 15px 40px;
+    background: rgba(0,0,0,0.3);
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 25px;
+    font-weight: bold;
+	font-size:16px;
+}
+nav{
+margin-left:auto;
+}
+header img
+{
+height:12px;
+width:auto;
+margin-right:15px;
+}
+
+nav a:hover {
+    color: #7CFC00;
+}
+
+.hero {
+    padding: 100px 20px;
+}
+
+section {
+    padding: 60px 20px;
+}
+
+
+.card-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.card {
+    background: rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 20px;
+    width: 250px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+.features-section {
+    padding: 80px 20px;
+    text-align: center;
+    background: rgba(0,0,0,0.5);
+}
+
+.features-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-top: 50px;
+}
+
+.feature-card {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    width: 300px;
+    padding: 20px;
+    transition: 0.4s;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.feature-card img {
+    width: 100%;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+.feature-card h3 {
+    margin-bottom: 10px;
+}
+
+.feature-card p {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+}
+.hero {
+    width: 300px;
+    height: 200px;
+    background-image: url("farm.jpg");
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+input, textarea {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    width: 300px;
+    border-radius: 10px;
+    border: none;
+}
+
+footer {
+    background: rgba(0,0,0,0.3);
+    padding: 15px;
+    margin-top: 40px;
+}
+/* Page background (keep your image) */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
+}
+
+/* Center container */
+.contact-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Glass effect card */
+.contact-box {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 40px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+/* Heading */
+.contact-box h2 {
+  margin-bottom: 25px;
+  font-size: 28px;
+  letter-spacing: 1px;
+}
+
+/* Input fields */
+.contact-box input,
+.contact-box textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 12px;
+  outline: none;
+  font-size: 14px;
+}
+
+/* Textarea height */
+.contact-box textarea {
+  height: 100px;
+  resize: none;
+}
+
+/* Button styling */
+.contact-box button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  background: white;
+  color: green;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+/* Button hover effect */
+.contact-box button:hover {
+  background: #e6e6e6;
+  transform: scale(1.03);
+}
+/* Section layout */
+#dashboard {
+  text-align: center;
+  padding: 60px 20px;
+  color: white;
+}
+
+/* Title */
+.section-title {
+  font-size: 32px;
+  margin-bottom: 40px;
+  letter-spacing: 1px;
+}
+
+/* Card container */
+.card-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+/* Card design */
+.card {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 25px;
+  border-radius: 20px;
+  width: 220px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+}
+
+.card img{
+height:80px;
+width:120px;
+}
+
+/* Card icon */
+.card-icon {
+  width: 50px;
+  margin-bottom: 10px;
+}
+
+/* Card text */
+.card h3 {
+  margin: 10px 0;
+  font-size: 20px;
+}
+
+.card p {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.card small {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+<img src="lobo.png" style="width: 90px; height: 90px;">
+    <h1 style="margin:0; font-size:32px;">GeoMist</h1>
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#contact">About us</a>
+    </nav>
+</header>
+
+
+<table width="100%" height="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td align="center" valign="middle">
+
+      <div style="position: relative; width: 100%; height: 100vh;">
+
+        <!-- Background Image inside table -->
+        <img src= "farm.png"
+             style="width: 100%; height: 100vh; object-fit: cover;filter: blur(5px);">
+
+        <!-- Text on top of image -->
+        <div style="
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  width: 90%; /* Responsive width */
+  max-width: 800px; /* Keeps lines from getting too long */
+">
+  <h1 style="font-size:40px; margin-bottom: 10px;">Smart Agriculture Monitoring System</h1>
+  <p style="font-size:20px; margin-bottom: 30px;">Grow smarter with real-time environmental tracking</p>
+  
+  <hr style="width: 50px; border: 2px solid #7CFC00; margin-bottom: 30px;">
+
+  <h2 style="font-size:30px;">🌿 About Us – GeoMist</h2>
+  
+  <p style="font-size:18px; line-height: 1.6; text-align: justify; margin-bottom: 30px;">
+    At GeoMist, we believe farming should be smart, sustainable, and stress-free. Our mission is to empower farmers and plant lovers with intelligent technology that ensures optimal plant growth while conserving valuable resources. 
+    <br>
+    GeoMist is a WiFi-enabled smart mist monitoring system designed to collect real-time data such as soil moisture, temperature, and humidity. Using advanced analysis, our system automatically sprays mist based on the plant’s actual needs — preventing overwatering, reducing wastage, and promoting healthy growth. 
+    <br>
+    We aim to bridge the gap between traditional farming and modern technology by providing an affordable, easy-to-use solution that enhances productivity and supports sustainable agriculture. With GeoMist, you don’t just water plants — you nurture them intelligently.
+  </p>
+  
+  <p style="font-size:20px; margin-bottom: 25px;">
+    <b>🌱 Smart Monitoring. Smart Watering. Smarter Farming.</b>
+  </p>
+
+  <button style="
+    padding: 12px 30px;
+    border: none;
+    border-radius: 25px;
+    background: white;
+    color: green;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+  " onclick="scrollToDashboard()">View Dashboard</button>
+</div>
+
+      </div>
+
+    </td>
+  </tr>
+</table>
+
+
+    <section id="features" class="features-section">
+    <h2>Our Features</h2>
+
+    <div class="features-container">
+
+        <div class="feature-card">
+            <img src="temp.png" alt="Temperature Monitoring">
+            <h3>🌡 Smart Temperature Monitoring</h3>
+            <p>
+                Real-time temperature tracking using advanced IoT sensors.
+                Helps farmers protect crops from extreme climate changes
+                and maintain optimal growing conditions.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <img src="humidity.png" alt="Humidity Tracking">
+            <h3>💧 Accurate Humidity Analysis</h3>
+            <p>
+                Monitor air moisture levels with precision.
+                Prevent plant diseases and optimize irrigation
+                for healthier crop production.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <img src="soil.png" alt="Soil Monitoring">
+            <h3>🌱 Intelligent Soil Monitoring</h3>
+            <p>
+                Analyze soil moisture and nutrients instantly.
+                Improve yield efficiency while conserving water
+                through smart farming insights.
+            </p>
+        </div>
+
+    </div>
+</section>
+
+<section id="dashboard">
+  <h2 class="section-title">Live Dashboard</h2>
+
+  <div class="card-container">
+
+    <div class="card">
+      <img src="thermo.png" class="card-icon">
+      <h3>Temperature</h3>
+      <p id="temp">31 °C</p>
+      <small>Real-time field temperature monitoring</small>
+    </div>
+
+    <div class="card">
+      <img src="drops.png" class="card-icon">
+      <h3>Humidity</h3>
+      <p id="humidity">43 %</p>
+      <small>Optimizes irrigation planning</small>
+    </div>
+
+    <div class="card">
+      <img src="soil2.png" class="card-icon">
+      <h3>Soil Moisture</h3>
+      <p id="soil">56 %</p>
+      <small>Prevents overwatering & crop damage</small>
+    </div>
+
+  </div>
+</section>
+  <a href="index.html"><button>Go to Page</button>
+    </a>
+<section class="contact" id="contact">
+    <h2>Contact Us</h2>
+	<form id="contactForm">
+    <input type="text" placeholder="Your Name" required>
+    <input type="email" placeholder="Your Email" required>
+    <textarea placeholder="Your Message" required></textarea>
+    <button type="submit">Send Message</button>
+    </form>
+	
+	<p id="successMsg" style="display:none; 
+	margin-top:15px;
+	color:#7CFC00;
+	font-weight:bold;
+	font-size:18px;
+	">
+	</p>
+	
+</section>
+
+<footer>
+    <p>© 2026 GeoMist | Sustainable Farming | Smart Growth 🌍</p>
+</footer>
+
+<script>
+function refreshData() {
+
+  let temperature = Math.floor(Math.random() * 15) + 20;
+  let humidity = Math.floor(Math.random() * 40) + 40;
+  let soil = Math.floor(Math.random() * 50) + 30;
+
+  document.getElementById("temp").innerText = temperature + " °C";
+  document.getElementById("humidity").innerText = humidity + " %";
+  document.getElementById("soil").innerText = soil + " %";
+}
+function sendMessage(event) {
+    event.preventDefault(); // Stop page refresh
+
+    // Show success message
+    document.getElementById("successMsg").style.display = "block";
+
+    // Clear form fields
+    document.querySelector(".contact form").reset();
+
+    // Hide message after 3 seconds (optional)
+    setTimeout(function() {
+        document.getElementById("successMsg").style.display = "none";
+    }, 3000);
+}
+// Contact Form Success Alert
+document.getElementById("contactForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // stop page refresh
+    alert("Message sent successfully!");
+    this.reset(); // clear form
+});
+
+function scrollToDashboard() {
+  document.getElementById("dashboard").scrollIntoView({
+    behavior: "smooth"
+  });
+}
+
+refreshData();
+</script>
+
+</body>
+</html>
