@@ -65,9 +65,9 @@ function generateReading(sensorId) {
   const b = bases[sensorId] || { temp: 24, humidity: 65, moisture: 55 };
   return {
     sensorId,
-    temperature: +(b.temp  + (Math.random() - 0.5) * 2).toFixed(1),
-    humidity:    +(b.humidity + (Math.random() - 0.5) * 3).toFixed(1),
-    moisture:    +(b.moisture + (Math.random() - 0.5) * 4).toFixed(1),
+		temperature: +(b.t + (Math.random(1,2)-1)*2).toFixed(1),
+        humidity:    +(b.h + (Math.random(0.2,0.3)-0.9)*1).toFixed(1),
+        moisture:    +(b.m + (Math.random(0.1,0.4)-0.9)*1).toFixed(1),
     battery:     +(85 + Math.random() * 15).toFixed(0),
     rssi:        -1 * (45 + Math.floor(Math.random() * 30)),
     ts:          Date.now(),
